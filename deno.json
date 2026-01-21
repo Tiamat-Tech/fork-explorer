@@ -1,9 +1,40 @@
 {
+  "lock": false,
   "tasks": {
-    "ultra": "mode=dev deno run -A --location=http://localhost:8080 --unstable --no-check server.ts",
-    "dev": "mode=dev deno run --unstable --allow-net --allow-read --allow-write --allow-run --allow-env --no-check index.ts",
-    "prod": "importMap=importMap.json deno run --unstable --allow-net --allow-read --allow-write --allow-run --allow-env --no-check index.ts",
-    "vendor": "importMap=importMap.json deno run -A --unstable https://deno.land/x/ultra@v1.0.1/vendor.ts"
+    "check": "deno fmt --check && deno lint && deno check **/*.ts && deno check **/*.tsx",
+    "dev": "deno run -A --watch=static/,routes/,islands/,lib/,shared/,components/ dev.ts",
+    "start": "deno run -A dev.ts build && deno run -A main.ts",
+    "build": "deno run -A dev.ts build",
+    "preview": "deno run -A main.ts",
+    "update": "deno run -A -r https://fresh.deno.dev/update ."
   },
-  "importMap": "importMap.json"
+  "imports": {
+    "$fresh/": "https://deno.land/x/fresh@1.6.8/",
+    "$std/": "https://deno.land/std@0.216.0/",
+    "preact": "https://esm.sh/preact@10.19.6",
+    "preact/": "https://esm.sh/preact@10.19.6/",
+    "preact-render-to-string": "https://esm.sh/*preact-render-to-string@6.4.0",
+    "@preact/signals": "https://esm.sh/*@preact/signals@1.2.2",
+    "@preact/signals-core": "https://esm.sh/*@preact/signals-core@1.5.1",
+    "easy-peasy": "https://esm.sh/easy-peasy@6.0.4?external=react,react-dom",
+    "react": "https://esm.sh/preact@10.19.6/compat",
+    "react/": "https://esm.sh/preact@10.19.6/compat/",
+    "react-dom": "https://esm.sh/preact@10.19.6/compat",
+    "react-dom/": "https://esm.sh/preact@10.19.6/compat/",
+    "swr": "https://esm.sh/swr@2.2.4?external=react",
+    "victory": "https://esm.sh/victory@36.9.2?external=react",
+    "date-fns": "https://esm.sh/date-fns@3.3.1",
+    "date-fns/": "https://esm.sh/date-fns@3.3.1/",
+    "bech32": "https://esm.sh/bech32@2.0.0",
+    "react-qr-svg": "https://esm.sh/react-qr-svg@2.4.0?external=react",
+    "canvas-confetti": "https://esm.sh/canvas-confetti@1.9.2"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  },
+  "nodeModulesDir": "auto",
+  "exclude": [
+    "**/_fresh/*"
+  ]
 }
