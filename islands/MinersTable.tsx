@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "preact/hooks";
+import { useEffect, useMemo, useState } from "preact/hooks";
 import type { IBlock, IMinerData } from "../shared/interfaces.ts";
-import { computeStats, computeMiners } from "../shared/data.ts";
-import { blocks, initializeStore, fetchBlocks } from "../lib/store.ts";
+import { computeMiners, computeStats } from "../shared/data.ts";
+import { blocks, fetchBlocks, initializeStore } from "../lib/store.ts";
 
 type SortKey = "name" | "share" | "blocks" | "signallingStatus";
 
@@ -15,9 +15,12 @@ interface TableRow {
 
 interface MinersTableProps {
   initialBlocks: IBlock[];
+  threshold: number;
 }
 
-export default function MinersTable({ initialBlocks }: MinersTableProps) {
+export default function MinersTable(
+  { initialBlocks, threshold }: MinersTableProps,
+) {
   const [sortKey, setSortKey] = useState<SortKey>("share");
   const [sortDirection, setSortDirection] = useState<"ASC" | "DESC">("DESC");
 
@@ -35,7 +38,7 @@ export default function MinersTable({ initialBlocks }: MinersTableProps) {
   }, []);
 
   const currentBlocks = blocks.value.length > 0 ? blocks.value : initialBlocks;
-  const { currentNumberOfBlocks } = computeStats(currentBlocks);
+  const { currentNumberOfBlocks } = computeStats(currentBlocks, threshold);
   const miners = useMemo(() => computeMiners(currentBlocks), [currentBlocks]);
 
   const totalSignallingRatio = miners
@@ -46,12 +49,17 @@ export default function MinersTable({ initialBlocks }: MinersTableProps) {
     .filter(([_, m]) => m.numSignallingBlocks > 0)
     .reduce((sum, [_, m]) => sum + m.numBlocks / currentNumberOfBlocks, 0);
 
-  const fixTable = (miners: [string, IMinerData][], key: SortKey): TableRow[] => {
+  const fixTable = (
+    miners: [string, IMinerData][],
+    key: SortKey,
+  ): TableRow[] => {
     const data = miners
       .map(([_, miner]) => {
         const r: TableRow = {
           name: miner.name,
-          share: `${((miner.numBlocks / currentNumberOfBlocks) * 100).toFixed(2)}%`,
+          share: `${
+            ((miner.numBlocks / currentNumberOfBlocks) * 100).toFixed(2)
+          }%`,
           blocks: `${miner.numSignallingBlocks}/${miner.numBlocks + " "}`,
           signallingStatus: miner.signals,
           website: miner.website,
@@ -60,9 +68,11 @@ export default function MinersTable({ initialBlocks }: MinersTableProps) {
       })
       .sort((a, b) => {
         if (key === "blocks") {
-          return Number.parseInt(b["blocks"].split("/")[0]) - Number.parseInt(a["blocks"].split("/")[0]);
+          return Number.parseInt(b["blocks"].split("/")[0]) -
+            Number.parseInt(a["blocks"].split("/")[0]);
         } else if (key === "share") {
-          return Number.parseFloat(b["share"].split("%")[0]) - Number.parseFloat(a["share"].split("%")[0]);
+          return Number.parseFloat(b["share"].split("%")[0]) -
+            Number.parseFloat(a["share"].split("%")[0]);
         }
         return `${b[key]}`.localeCompare(`${a[key]}`);
       });
@@ -91,7 +101,10 @@ export default function MinersTable({ initialBlocks }: MinersTableProps) {
         Current total: {(totalSignallingRatio * 100).toFixed(2)}% ✅
       </h2>
       {totalSignallingPotentialRatio > totalSignallingRatio && (
-        <h3 class="totals-potential" title="Share if miners would consistently signal for readiness">
+        <h3
+          class="totals-potential"
+          title="Share if miners would consistently signal for readiness"
+        >
           {`Potential: ${(totalSignallingPotentialRatio * 100).toFixed(2)}%`}
         </h3>
       )}
@@ -100,34 +113,54 @@ export default function MinersTable({ initialBlocks }: MinersTableProps) {
           <thead class="table-head">
             <tr class="table-row">
               <th class="table-header">
-                <a class="table-header-link" href="#" onClick={(e) => onClickSort(e, "name")}>
+                <a
+                  class="table-header-link"
+                  href="#"
+                  onClick={(e) => onClickSort(e, "name")}
+                >
                   Mining pool{" "}
                   <span class="table-header-sort">
-                    {sortKey === "name" && (sortDirection === "ASC" ? "▴" : "▾")}
+                    {sortKey === "name" &&
+                      (sortDirection === "ASC" ? "▴" : "▾")}
                   </span>
                 </a>
               </th>
               <th class="table-header">
-                <a class="table-header-link" href="#" onClick={(e) => onClickSort(e, "share")}>
+                <a
+                  class="table-header-link"
+                  href="#"
+                  onClick={(e) => onClickSort(e, "share")}
+                >
                   Share{" "}
                   <span class="table-header-sort">
-                    {sortKey === "share" && (sortDirection === "ASC" ? "▴" : "▾")}
+                    {sortKey === "share" &&
+                      (sortDirection === "ASC" ? "▴" : "▾")}
                   </span>
                 </a>
               </th>
               <th class="table-header">
-                <a class="table-header-link" href="#" onClick={(e) => onClickSort(e, "blocks")}>
+                <a
+                  class="table-header-link"
+                  href="#"
+                  onClick={(e) => onClickSort(e, "blocks")}
+                >
                   Blocks{" "}
                   <span class="table-header-sort">
-                    {sortKey === "blocks" && (sortDirection === "ASC" ? "▴" : "▾")}
+                    {sortKey === "blocks" &&
+                      (sortDirection === "ASC" ? "▴" : "▾")}
                   </span>
                 </a>
               </th>
               <th class="table-header">
-                <a class="table-header-link" href="#" onClick={(e) => onClickSort(e, "signallingStatus")}>
+                <a
+                  class="table-header-link"
+                  href="#"
+                  onClick={(e) => onClickSort(e, "signallingStatus")}
+                >
                   Signals{" "}
                   <span class="table-header-sort">
-                    {sortKey === "signallingStatus" && (sortDirection === "ASC" ? "▴" : "▾")}
+                    {sortKey === "signallingStatus" &&
+                      (sortDirection === "ASC" ? "▴" : "▾")}
                   </span>
                 </a>
               </th>
@@ -137,13 +170,15 @@ export default function MinersTable({ initialBlocks }: MinersTableProps) {
             {tableData.map((row) => (
               <tr class="table-row" key={row.name + row.signallingStatus}>
                 <td class="table-cell">
-                  {row.website ? (
-                    <a href={row.website} target="_blank">
-                      {row.name}
-                    </a>
-                  ) : (
-                    row.name
-                  )}
+                  {row.website
+                    ? (
+                      <a href={row.website} target="_blank">
+                        {row.name}
+                      </a>
+                    )
+                    : (
+                      row.name
+                    )}
                 </td>
                 <td class="table-cell">{row.share}</td>
                 <td class="signalling-cell">

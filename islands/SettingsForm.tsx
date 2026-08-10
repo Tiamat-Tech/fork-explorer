@@ -1,18 +1,25 @@
 import { useEffect } from "preact/hooks";
-import { clientConfig } from "../shared/client-config.ts";
+import type { ClientConfig } from "../shared/client-config.ts";
 import {
-  theme,
+  activePeriod,
   autoRefreshEnabled,
   availablePeriods,
-  activePeriod,
-  changeTheme,
   changeAutoRefreshEnabled,
   changeMonitoringPeriod,
+  changeTheme,
   initializeStore,
   Theme,
+  theme,
 } from "../lib/store.ts";
 
-export default function SettingsForm() {
+interface SettingsFormProps {
+  autoRefreshInterval: number | null;
+  status: ClientConfig["fork"]["status"];
+}
+
+export default function SettingsForm(
+  { autoRefreshInterval, status }: SettingsFormProps,
+) {
   useEffect(() => {
     initializeStore();
   }, []);
@@ -26,7 +33,9 @@ export default function SettingsForm() {
   };
 
   const onChangePeriod = async (selected: "current" | string) => {
-    await changeMonitoringPeriod(selected === "current" ? selected : Number.parseInt(selected));
+    await changeMonitoringPeriod(
+      selected === "current" ? selected : Number.parseInt(selected),
+    );
   };
 
   return (
@@ -38,9 +47,10 @@ export default function SettingsForm() {
         <select
           class="settings-dropdown"
           value={theme.value}
-          onChange={(e) => onChangeTheme((e.target as HTMLSelectElement).value as Theme)}
+          onChange={(e) =>
+            onChangeTheme((e.target as HTMLSelectElement).value as Theme)}
         >
-          {Object.entries(Theme).map(([key, value]) => (
+          {Object.values(Theme).map((value) => (
             <option key={value} value={value}>
               {value}
             </option>
@@ -48,9 +58,11 @@ export default function SettingsForm() {
         </select>
       </div>
 
-      {clientConfig.frontend.autoRefreshInterval !== null && (
+      {autoRefreshInterval !== null && (
         <div class="settings-group">
-          <p class="settings-label text">Auto-fetch blocks (every {clientConfig.frontend.autoRefreshInterval}s)</p>
+          <p class="settings-label text">
+            Auto-fetch blocks (every {autoRefreshInterval}s)
+          </p>
           <input
             type="checkbox"
             onChange={toggleAutoRefreshEnabled}
@@ -65,9 +77,12 @@ export default function SettingsForm() {
           <select
             class="settings-dropdown"
             value={activePeriod.value ?? "current"}
-            onChange={(e) => onChangePeriod((e.target as HTMLSelectElement).value)}
+            onChange={(e) =>
+              onChangePeriod((e.target as HTMLSelectElement).value)}
           >
-            <option value="current">{clientConfig.fork.status === "started" ? "Current" : "-"}</option>
+            <option value="current">
+              {status === "started" ? "Current" : "-"}
+            </option>
             {availablePeriods.value.map((period) => (
               <option key={period} value={period}>
                 {period}

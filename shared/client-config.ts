@@ -1,5 +1,6 @@
-// Client-safe configuration that doesn't use Deno.env
-// These values are safe to use in browser code
+// The subset of configuration that may be serialized into browser code.
+// Values are populated from the server configuration and passed to islands as
+// props; this module intentionally contains no deployment-specific defaults.
 
 export interface ClientConfig {
   fork: {
@@ -23,20 +24,3 @@ export interface ClientConfig {
     lightningNodeUri?: string;
   };
 }
-
-// Default client config - these values should match the server config defaults
-export const clientConfig: ClientConfig = {
-  fork: {
-    name: "CTV",
-    threshold: 1815,
-    status: "started",
-    activationHeight: 709632,
-    showActivationCountdown: false,
-    showCelebrationConfetti: false,
-  },
-  frontend: {
-    autoRefreshInterval: 120,
-    twitterHandle: "",
-  },
-  donation: undefined,
-};

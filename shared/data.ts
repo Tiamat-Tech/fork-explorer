@@ -1,25 +1,38 @@
-import { clientConfig } from "./client-config.ts";
 import { IBlock, IMinerData, IMiners } from "./interfaces.ts";
 
-export function computeStats(blocks: IBlock[]) {
-  const threshold = clientConfig.fork.threshold;
-  const currentNumberOfBlocks = blocks.reduce((prev, currentBlock) => prev + +(currentBlock.signals !== undefined), 0);
+export function computeStats(blocks: IBlock[], threshold: number) {
+  const currentNumberOfBlocks = blocks.reduce(
+    (prev, currentBlock) => prev + +(currentBlock.signals !== undefined),
+    0,
+  );
   const currentNumberOfSignallingBlocks = blocks.reduce(
     (prev, currentBlock) => prev + +(currentBlock.signals ?? false),
-    0
+    0,
   );
   const blocksLeftForActivation = threshold - currentNumberOfSignallingBlocks;
   const lockedIn = currentNumberOfSignallingBlocks >= threshold;
-  const blocksLeftInThisPeriod = blocks.reduce((prev, currentBlock) => prev + +(currentBlock.signals === undefined), 0);
+  const blocksLeftInThisPeriod = blocks.reduce(
+    (prev, currentBlock) => prev + +(currentBlock.signals === undefined),
+    0,
+  );
   const currentPeriodFailed = blocksLeftForActivation > blocksLeftInThisPeriod;
-  const currentSignallingRatio =
-    currentNumberOfBlocks > 0 ? currentNumberOfSignallingBlocks / currentNumberOfBlocks : 0;
+  const currentSignallingRatio = currentNumberOfBlocks > 0
+    ? currentNumberOfSignallingBlocks / currentNumberOfBlocks
+    : 0;
   const currentSignallingPercentage = (currentSignallingRatio * 100).toFixed(2);
-  const currentSignallingRatioToAll = currentNumberOfBlocks > 0 ? currentNumberOfSignallingBlocks / 2016 : 0;
-  const currentSignallingPercentageToAll = (currentSignallingRatioToAll * 100).toFixed(2);
-  const estimatedSignallingBlocksLeft = Math.floor(currentSignallingRatio * blocksLeftInThisPeriod);
-  const willProbablyActivate = estimatedSignallingBlocksLeft <= blocksLeftInThisPeriod && currentSignallingRatio >= 0.9;
-  const currentNumberOfNonSignallingBlocks = currentNumberOfBlocks - currentNumberOfSignallingBlocks;
+  const currentSignallingRatioToAll = currentNumberOfBlocks > 0
+    ? currentNumberOfSignallingBlocks / 2016
+    : 0;
+  const currentSignallingPercentageToAll = (currentSignallingRatioToAll * 100)
+    .toFixed(2);
+  const estimatedSignallingBlocksLeft = Math.floor(
+    currentSignallingRatio * blocksLeftInThisPeriod,
+  );
+  const willProbablyActivate =
+    estimatedSignallingBlocksLeft <= blocksLeftInThisPeriod &&
+    currentSignallingRatio >= 0.9;
+  const currentNumberOfNonSignallingBlocks = currentNumberOfBlocks -
+    currentNumberOfSignallingBlocks;
 
   return {
     currentNumberOfBlocks,
@@ -50,7 +63,8 @@ export function computeMiners(blocks: IBlock[]): [string, IMinerData][] {
       return prev;
     }
 
-    const key = currBlock.miner ?? (currBlock.signals ? "unknown_signalling" : "unknown_nonsignalling");
+    const key = currBlock.miner ??
+      (currBlock.signals ? "unknown_signalling" : "unknown_nonsignalling");
     if (!prev[key]) {
       prev[key] = {
         name: currBlock.miner ?? "Unrecognized miners",

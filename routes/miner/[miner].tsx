@@ -1,6 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import { Head } from "$fresh/runtime.ts";
-import config from "../../lib/config.ts";
+import config, { clientConfig } from "../../lib/config.ts";
 import { getBlocks } from "../../lib/blocks/index.ts";
 import type { IBlock } from "../../shared/interfaces.ts";
 import SiteTitle from "../../components/SiteTitle.tsx";
@@ -41,13 +41,27 @@ export default function MinerPage({ data }: PageProps<Data>) {
         <title>{forkName} activation - {minerName}</title>
       </Head>
       <div class="content" style={{ maxWidth: "800px" }}>
-        <SiteTitle />
-        <SiteMenu currentPath={`/miner/${minerName}`} />
+        <SiteTitle forkName={clientConfig.fork.name} />
+        <SiteMenu
+          currentPath={`/miner/${minerName}`}
+          forkName={clientConfig.fork.name}
+          status={clientConfig.fork.status}
+        />
         <div class="body">
-          <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <h2 class="miner-title common-header">{minerName}</h2>
           </div>
-          <a class="see-miner-overview" href={`/?miner=${encodeURIComponent(minerName)}`}>
+          <a
+            class="see-miner-overview"
+            href={`/?miner=${encodeURIComponent(minerName)}`}
+          >
             See miner's block on overview page
           </a>
           <div class="miner-blocks-container">
@@ -55,7 +69,10 @@ export default function MinerPage({ data }: PageProps<Data>) {
               <div class="miner-block" key={block.height}>
                 <p class="text">
                   {block.signals ? "✅ " : "🚫 "} Block #
-                  <a href={`https://mempool.space/block/${block.height}?showDetails=true`} target="_blank">
+                  <a
+                    href={`https://mempool.space/block/${block.height}?showDetails=true`}
+                    target="_blank"
+                  >
                     {block.height}
                   </a>
                   <a class="locate" href={`/?block=${block.height}`}>🔍</a>
@@ -64,8 +81,8 @@ export default function MinerPage({ data }: PageProps<Data>) {
             ))}
           </div>
         </div>
-        <ContactTwitter />
-        <Donation />
+        <ContactTwitter twitterHandle={clientConfig.frontend.twitterHandle} />
+        <Donation donation={clientConfig.donation} />
       </div>
     </div>
   );

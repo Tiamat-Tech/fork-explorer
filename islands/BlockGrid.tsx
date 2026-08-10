@@ -2,10 +2,10 @@ import { useEffect } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import type { IBlock } from "../shared/interfaces.ts";
 import {
-  blocks,
   autoRefreshEnabled,
-  initializeStore,
+  blocks,
   fetchBlocks,
+  initializeStore,
   startAutoRefresh,
 } from "../lib/store.ts";
 
@@ -30,7 +30,10 @@ Signalling: ${signals ? "Yes" : "No"}`;
   ].filter(Boolean).join(" ");
 
   return (
-    <a href={`https://mempool.space/block/${height}?showDetails=true`} target="_blank">
+    <a
+      href={`https://mempool.space/block/${height}?showDetails=true`}
+      target="_blank"
+    >
       <div class={classes} title={hover}></div>
     </a>
   );
@@ -64,9 +67,15 @@ interface BlockGridProps {
   initialBlocks: IBlock[];
   selectedMiner?: string | null;
   selectedBlock?: string | null;
+  autoRefreshInterval: number | null;
 }
 
-export default function BlockGrid({ initialBlocks, selectedMiner, selectedBlock }: BlockGridProps) {
+export default function BlockGrid({
+  initialBlocks,
+  selectedMiner,
+  selectedBlock,
+  autoRefreshInterval,
+}: BlockGridProps) {
   const initialized = useSignal(false);
 
   useEffect(() => {
@@ -80,14 +89,15 @@ export default function BlockGrid({ initialBlocks, selectedMiner, selectedBlock 
       if (initialBlocks.length === 0) {
         await fetchBlocks();
       }
-      startAutoRefresh();
+      startAutoRefresh(autoRefreshInterval);
       initialized.value = true;
     })();
   }, []);
 
   // Use signal value if available, otherwise fallback to initialBlocks for SSR
   const currentBlocks = blocks.value.length > 0 ? blocks.value : initialBlocks;
-  const nextBlockHeight = currentBlocks.find((block) => block.signals === undefined)?.height ?? 0;
+  const nextBlockHeight =
+    currentBlocks.find((block) => block.signals === undefined)?.height ?? 0;
 
   let miner = selectedMiner;
   if (miner === "Unrecognized miners") {
@@ -108,14 +118,21 @@ export default function BlockGrid({ initialBlocks, selectedMiner, selectedBlock 
     <div class="block-container">
       {currentBlocks.map((block, i) => {
         if (block.signals === undefined) {
-          return <EmptyBlock key={i} height={block.height} nextBlock={block.height === nextBlockHeight} />;
+          return (
+            <EmptyBlock
+              key={i}
+              height={block.height}
+              nextBlock={block.height === nextBlockHeight}
+            />
+          );
         }
         return (
           <Block
             key={i}
             height={block.height}
             signals={block.signals}
-            selected={selectedBlock === block.height.toString() || miner === block.miner}
+            selected={selectedBlock === block.height.toString() ||
+              miner === block.miner}
             miner={block.miner}
           />
         );

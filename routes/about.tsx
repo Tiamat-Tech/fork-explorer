@@ -1,6 +1,5 @@
-import { Handlers, PageProps } from "$fresh/server.ts";
 import { Head } from "$fresh/runtime.ts";
-import config from "../lib/config.ts";
+import config, { clientConfig } from "../lib/config.ts";
 import SiteTitle from "../components/SiteTitle.tsx";
 import ContactTwitter from "../components/ContactTwitter.tsx";
 import SiteMenu from "../islands/SiteMenu.tsx";
@@ -15,18 +14,26 @@ export default function About() {
         <title>{config.fork.name} Activation - About</title>
       </Head>
       <div class="content">
-        <SiteTitle />
-        <SiteMenu currentPath="/about" />
+        <SiteTitle forkName={clientConfig.fork.name} />
+        <SiteMenu
+          currentPath="/about"
+          forkName={clientConfig.fork.name}
+          status={clientConfig.fork.status}
+        />
         <div class="body">
           <div class="info-container">
             <div class="info-section">
-              <h2 class="about-header">Information about the softfork {forkName}</h2>
+              <h2 class="about-header">
+                Information about the softfork {forkName}
+              </h2>
               {config.frontend.about?.softfork?.info?.map((section, i) => (
                 <p class="text" key={i}>{section}</p>
               ))}
             </div>
             <div class="info-section">
-              <h2 class="about-header">{config.frontend.about?.method?.title}</h2>
+              <h2 class="about-header">
+                {config.frontend.about?.method?.title}
+              </h2>
               {config.frontend.about?.method?.info?.map((section, i) => (
                 <p class="text" key={i}>{section}</p>
               ))}
@@ -34,18 +41,22 @@ export default function About() {
             <div class="info-section">
               <h2 class="about-header">About this site</h2>
               <p class="text">
-                <a href="https://github.com/hsjoberg/fork-explorer" target="_blank">
+                <a
+                  href="https://github.com/hsjoberg/fork-explorer"
+                  target="_blank"
+                >
                   fork-explorer
                 </a>{" "}
-                is an on open-source project. Both this site and the open-source project is developed and maintained by
-                Hampus Sjoberg (
+                is an on open-source project. Both this site and the open-source
+                project is developed and maintained by Hampus Sjoberg (
                 <a href="https://twitter.com/hampus_s" target="_blank">
                   @hampus_s
                 </a>
                 ).
               </p>
               <p class="text">
-                If you enjoy this site, leave a Lightning Network donation below or check out my other project{" "}
+                If you enjoy this site, leave a Lightning Network donation below
+                or check out my other project{" "}
                 <a href="https://blixtwallet.github.io" target="_blank">
                   Blixt Wallet
                 </a>
@@ -59,7 +70,11 @@ export default function About() {
               {config.frontend.sponsors?.map((sponsor) => (
                 <div class="sponsor-section" key={sponsor.title}>
                   <a class="sponsor" href={sponsor.url} target="_blank">
-                    <img class="sponsor-image" src={sponsor.imageUri} alt={sponsor.title} />
+                    <img
+                      class="sponsor-image"
+                      src={sponsor.imageUri}
+                      alt={sponsor.title}
+                    />
                     <p class="sponsor-name">{sponsor.title}</p>
                   </a>
                 </div>
@@ -67,8 +82,8 @@ export default function About() {
             </div>
           )}
         </div>
-        <ContactTwitter />
-        <Donation />
+        <ContactTwitter twitterHandle={clientConfig.frontend.twitterHandle} />
+        <Donation donation={clientConfig.donation} />
       </div>
     </div>
   );

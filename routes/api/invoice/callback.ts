@@ -1,20 +1,20 @@
 import { Handlers } from "$fresh/server.ts";
-import { ensureFile } from "$std/fs/ensure_file.ts";
-import { encodeHex } from "$std/encoding/hex.ts";
 import { encodeBase64 } from "$std/encoding/base64.ts";
 import config from "../../../lib/config.ts";
 import { bytesToHexString } from "../../../shared/utils.ts";
-
-await ensureFile("./addinvoice_payload.json");
-await ensureFile("./lnurlpay.json");
 
 interface LnurlPayComment {
   paymentRequest: string;
   comment: string;
 }
 
-const lnurlPayComments: LnurlPayComment[] = JSON.parse((await Deno.readTextFile("./lnurlpay.json")) || "[]");
-const responseMetadata = JSON.stringify([["text/plain", "Donation to taproot.watch"]]);
+const lnurlPayComments: LnurlPayComment[] = JSON.parse(
+  (await Deno.readTextFile("./lnurlpay.json")) || "[]",
+);
+const responseMetadata = JSON.stringify([[
+  "text/plain",
+  "Donation to taproot.watch",
+]]);
 
 // Simple SHA256 hash for description_hash
 async function sha256(message: string): Promise<string> {
@@ -34,7 +34,7 @@ export const handler: Handlers = {
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -48,32 +48,33 @@ export const handler: Handlers = {
         }),
         {
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
     const amount = Number.parseInt(amountString);
 
     const descriptionHash = await sha256(responseMetadata);
 
-    await Deno.writeTextFile(
-      "./addinvoice_payload.json",
-      JSON.stringify({
-        value_msat: amount,
-        memo: "Donation to taproot.watch",
-        description_hash: descriptionHash,
-      })
-    );
+    const addInvoicePayload = JSON.stringify({
+      value_msat: amount,
+      memo: "Donation to taproot.watch",
+      description_hash: descriptionHash,
+    });
 
     const macaroonBytes = await Deno.readFile(config.donation.data.macaroon);
     const macaroonHeader = bytesToHexString(macaroonBytes);
 
     const command = new Deno.Command("curl", {
       args: [
-        "-X", "POST",
-        "--cacert", config.donation.data.cert,
-        "--header", `Grpc-Metadata-macaroon: ${macaroonHeader}`,
-        "-d", `@addinvoice_payload.json`,
-        `${config.donation.data.server}/v1/invoices`
+        "-X",
+        "POST",
+        "--cacert",
+        config.donation.data.cert,
+        "--header",
+        `Grpc-Metadata-macaroon: ${macaroonHeader}`,
+        "--data-binary",
+        addInvoicePayload,
+        `${config.donation.data.server}/v1/invoices`,
       ],
       stdout: "piped",
     });
@@ -90,7 +91,10 @@ export const handler: Handlers = {
           comment,
         };
         lnurlPayComments.push(lnurlPay);
-        await Deno.writeTextFile("./lnurlpay.json", JSON.stringify(lnurlPayComments, null, 2));
+        await Deno.writeTextFile(
+          "./lnurlpay.json",
+          JSON.stringify(lnurlPayComments, null, 2),
+        );
       } catch (e) {
         console.log(e);
       }
@@ -108,7 +112,7 @@ export const handler: Handlers = {
       }),
       {
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   },
 };

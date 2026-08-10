@@ -1,5 +1,5 @@
 import { Head } from "$fresh/runtime.ts";
-import config from "../lib/config.ts";
+import config, { clientConfig } from "../lib/config.ts";
 import SiteTitle from "../components/SiteTitle.tsx";
 import ContactTwitter from "../components/ContactTwitter.tsx";
 import SiteMenu from "../islands/SiteMenu.tsx";
@@ -15,13 +15,20 @@ export default function Settings() {
         <title>{forkName} activation - Settings</title>
       </Head>
       <div class="content">
-        <SiteTitle />
-        <SiteMenu currentPath="/settings" />
+        <SiteTitle forkName={clientConfig.fork.name} />
+        <SiteMenu
+          currentPath="/settings"
+          forkName={clientConfig.fork.name}
+          status={clientConfig.fork.status}
+        />
         <div class="body">
-          <SettingsForm />
+          <SettingsForm
+            autoRefreshInterval={clientConfig.frontend.autoRefreshInterval}
+            status={clientConfig.fork.status}
+          />
         </div>
-        <ContactTwitter />
-        <Donation />
+        <ContactTwitter twitterHandle={clientConfig.frontend.twitterHandle} />
+        <Donation donation={clientConfig.donation} />
       </div>
     </div>
   );

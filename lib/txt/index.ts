@@ -2,7 +2,7 @@ import { bech32 } from "bech32";
 
 import config from "../config.ts";
 import { getBlocks } from "../blocks/index.ts";
-import { computeStats, computeMiners } from "../../shared/data.ts";
+import { computeMiners, computeStats } from "../../shared/data.ts";
 import { wrap80 } from "../../shared/utils.ts";
 
 const UPCOMING = "⬚";
@@ -22,7 +22,7 @@ export function homeTXT() {
     currentSignallingPercentage,
     currentNumberOfSignallingBlocks,
     currentNumberOfNonSignallingBlocks,
-  } = computeStats(blocks);
+  } = computeStats(blocks, config.fork.threshold);
   const miners = computeMiners(blocks);
   const forkName = config.fork.name;
   const status = config.fork.status;
@@ -36,7 +36,9 @@ export function homeTXT() {
   const totalSignalling = miners
     .filter(([_, m]) => m.signals)
     .reduce((sum, [_, m]) => sum + m.numBlocks / currentNumberOfBlocks, 0);
-  const threshold = Number.parseFloat((config.fork.threshold / 2016).toFixed(2));
+  const threshold = Number.parseFloat(
+    (config.fork.threshold / 2016).toFixed(2),
+  );
   const thresholdPercentage = Math.floor(threshold * 100);
 
   let blocksTable = "";
@@ -45,23 +47,38 @@ export function homeTXT() {
     if (i % BLOCKS_PER_ROW === 0) blocksTable += "\n";
 
     const block = blocks[i];
-    blocksTable += typeof block.signals === "undefined" ? UPCOMING : block.signals ? SIGNALING : NONSIGNALING;
+    blocksTable += typeof block.signals === "undefined"
+      ? UPCOMING
+      : block.signals
+      ? SIGNALING
+      : NONSIGNALING;
     blocksTable += " ";
   }
   const last = blocks[blocks.length - 1];
   blocksTable += "\n";
-  blocksTable += " ".repeat(BLOCKS_PER_ROW * 2 - String(last.height).length - 1) + String(last.height);
+  blocksTable +=
+    " ".repeat(BLOCKS_PER_ROW * 2 - String(last.height).length - 1) +
+    String(last.height);
 
   const notes = [];
-  if (lockedIn) notes.push(`${forkName.toUpperCase()} IS LOCKED IN FOR DEPLOYMENT!`);
-  else {
-    notes.push(`${blocksLeftForActivation} ${forkName} blocks left until softfork is locked in.`);
-    if (currentPeriodFailed)
-      notes.push(`${forkName} cannot be locked in within this period (90% of the blocks have to signal).`);
-    else {
-      if (willProbablyActivate)
-        notes.push(`Taproot will lock in with the current signalling ratio (${currentSignallingPercentage}%)!`);
-      else notes.push(`Taproot will not lock in with the current signalling ratio (${currentSignallingPercentage}%)`);
+  if (lockedIn) {
+    notes.push(`${forkName.toUpperCase()} IS LOCKED IN FOR DEPLOYMENT!`);
+  } else {
+    notes.push(
+      `${blocksLeftForActivation} ${forkName} blocks left until softfork is locked in.`,
+    );
+    if (currentPeriodFailed) {
+      notes.push(
+        `${forkName} cannot be locked in within this period (90% of the blocks have to signal).`,
+      );
+    } else {
+      if (willProbablyActivate) {
+        notes.push(
+          `Taproot will lock in with the current signalling ratio (${currentSignallingPercentage}%)!`,
+        );
+      } else {notes.push(
+          `Taproot will not lock in with the current signalling ratio (${currentSignallingPercentage}%)`,
+        );}
     }
   }
 
@@ -70,7 +87,13 @@ export function homeTXT() {
 ---
 
 Donate via Lightning Network:
-${bech32.encode("lnurl", bech32.toWords(new TextEncoder().encode(config.donation?.lnurlPayUrl)), 1024)}`
+${
+      bech32.encode(
+        "lnurl",
+        bech32.toWords(new TextEncoder().encode(config.donation?.lnurlPayUrl)),
+        1024,
+      )
+    }`
     : "";
 
   const progressBar =
@@ -79,7 +102,8 @@ ${bech32.encode("lnurl", bech32.toWords(new TextEncoder().encode(config.donation
     "<".repeat(Math.ceil(currentNumberOfNonSignallingBlocks / 25));
   const pct = Math.round(progressBar.length * 0.9);
   const labelPct = " ".repeat(pct - 1) + thresholdPercentage + "%";
-  const progressBarWithPct = progressBar.slice(0, pct) + "|" + progressBar.slice(pct);
+  const progressBarWithPct = progressBar.slice(0, pct) + "|" +
+    progressBar.slice(pct);
 
   const minerLongestName = miners.reduce((prevName, [_, miner]) => {
     if (miner.name.length > prevName) {
@@ -113,16 +137,25 @@ Mining Pools
 
 Current total: ${(totalSignalling * 100).toFixed(2)}% ✅
 
-${miners
-  .map(([_, miner]) => {
-    let minerTxt = "";
-    minerTxt += `- ${miner.name.padEnd(minerLongestName + 2)}`;
-    minerTxt += `share: ${((miner.numBlocks / currentNumberOfBlocks) * 100).toFixed(2)}%`.padEnd(13) + ` | `;
-    minerTxt += `blocks: ${miner.numSignallingBlocks}/${miner.numBlocks}`.padEnd(16) + ` | `;
-    minerTxt += `${miner.signals ? `signals!      ✅` : `not signaling 🚫`}`;
-    return minerTxt;
-  })
-  .join("\n")}
+${
+    miners
+      .map(([_, miner]) => {
+        let minerTxt = "";
+        minerTxt += `- ${miner.name.padEnd(minerLongestName + 2)}`;
+        minerTxt +=
+          `share: ${
+            ((miner.numBlocks / currentNumberOfBlocks) * 100).toFixed(2)
+          }%`.padEnd(13) + ` | `;
+        minerTxt +=
+          `blocks: ${miner.numSignallingBlocks}/${miner.numBlocks}`.padEnd(16) +
+          ` | `;
+        minerTxt += `${
+          miner.signals ? `signals!      ✅` : `not signaling 🚫`
+        }`;
+        return minerTxt;
+      })
+      .join("\n")
+  }
 
 ${donation}
 `;

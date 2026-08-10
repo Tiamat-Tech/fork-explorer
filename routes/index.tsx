@@ -1,6 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
-import { formatDistanceToNow, addMinutes } from "date-fns";
-import config from "../lib/config.ts";
+import { addMinutes, formatDistanceToNow } from "date-fns";
+import config, { clientConfig } from "../lib/config.ts";
 import { getBlocks } from "../lib/blocks/index.ts";
 import { homeTXT } from "../lib/txt/index.ts";
 import { pageviews, pageviewsTxt } from "../lib/pageviews/index.ts";
@@ -29,7 +29,8 @@ export const handler: Handlers<Data> = {
     if (
       accepts.includes("text/plain") ||
       url.pathname === "/index.txt" ||
-      (accepts === "*/*" && !accepts.includes("text/html") && !url.pathname.toLowerCase().endsWith(".js"))
+      (accepts === "*/*" && !accepts.includes("text/html") &&
+        !url.pathname.toLowerCase().endsWith(".js"))
     ) {
       await pageviewsTxt();
       const textContent = homeTXT();
@@ -60,7 +61,7 @@ export default function Home({ data }: PageProps<Data>) {
     currentSignallingPercentage,
     willProbablyActivate,
     blocksLeftInThisPeriod,
-  } = computeStats(blocks);
+  } = computeStats(blocks, config.fork.threshold);
 
   const thresholdPercentage = Math.floor((config.fork.threshold / 2016) * 100);
   const forkCompleted = lockedIn || ["locked_in", "active"].includes(status);
@@ -68,10 +69,16 @@ export default function Home({ data }: PageProps<Data>) {
   return (
     <div class="container">
       <div class="content-wide">
-        <SiteTitle />
-        <SiteMenu currentPath="/" />
+        <SiteTitle forkName={clientConfig.fork.name} />
+        <SiteMenu
+          currentPath="/"
+          forkName={clientConfig.fork.name}
+          status={clientConfig.fork.status}
+        />
         <div class="body" style={{ paddingLeft: "18px", paddingRight: "18px" }}>
-          {forkCompleted && <ForkStatus initialBlocks={blocks} />}
+          {forkCompleted && (
+            <ForkStatus initialBlocks={blocks} clientConfig={clientConfig} />
+          )}
           {!forkCompleted && (
             <>
               {currentPeriodFailed && blocksLeftInThisPeriod > 0 && (
@@ -79,8 +86,12 @@ export default function Home({ data }: PageProps<Data>) {
                   The current period cannot lock in {forkName}.
                   <br />
                   The next period starts in
-                  {" " + formatDistanceToNow(addMinutes(new Date(), blocksLeftInThisPeriod * 10)) + " "}(
-                  {blocksLeftInThisPeriod} block{blocksLeftInThisPeriod > 1 && "s"})
+                  {" " +
+                    formatDistanceToNow(
+                      addMinutes(new Date(), blocksLeftInThisPeriod * 10),
+                    ) + " "}(
+                  {blocksLeftInThisPeriod}{" "}
+                  block{blocksLeftInThisPeriod > 1 && "s"})
                 </h2>
               )}
               <div class="description-block">
@@ -88,26 +99,40 @@ export default function Home({ data }: PageProps<Data>) {
                   <p class="text" key={index}>{text}</p>
                 ))}
               </div>
-              {blocks.length > 0 && <ProgressBar initialBlocks={blocks} />}
+              {blocks.length > 0 && (
+                <ProgressBar
+                  initialBlocks={blocks}
+                  threshold={clientConfig.fork.threshold}
+                />
+              )}
               <div class="top-section">
-                <h2 class="common-header current-period">Current signalling period of 2016 blocks (2 weeks)</h2>
+                <h2 class="common-header current-period">
+                  Current signalling period of 2016 blocks (2 weeks)
+                </h2>
                 <div class="lockin-info">
-                  {lockedIn && <>{forkName.toUpperCase()} IS LOCKED IN FOR DEPLOYMENT!</>}
+                  {lockedIn && (
+                    <>{forkName.toUpperCase()} IS LOCKED IN FOR DEPLOYMENT!</>
+                  )}
                   {!lockedIn && (
                     <>
                       {!currentPeriodFailed && (
                         <>
-                          {blocksLeftForActivation} additional signalling blocks required for the softfork to lock in
+                          {blocksLeftForActivation}{" "}
+                          additional signalling blocks required for the softfork
+                          to lock in
                           <br />
                           {willProbablyActivate && (
                             <>
-                              {config.fork.name} will lock in with the current signalling ratio (
+                              {config.fork.name}{" "}
+                              will lock in with the current signalling ratio (
                               {currentSignallingPercentage}%)!
                             </>
                           )}
                           {!willProbablyActivate && (
                             <>
-                              {config.fork.name} will not lock in with the current signalling ratio (
+                              {config.fork.name}{" "}
+                              will not lock in with the current signalling ratio
+                              (
                               {currentSignallingPercentage}%)
                             </>
                           )}
@@ -117,8 +142,8 @@ export default function Home({ data }: PageProps<Data>) {
                         <>
                           {forkName} cannot be locked in within this period
                           <br />
-                          {thresholdPercentage}% of the blocks have to signal (current ratio:{" "}
-                          {currentSignallingPercentage}%)
+                          {thresholdPercentage}% of the blocks have to signal
+                          (current ratio: {currentSignallingPercentage}%)
                         </>
                       )}
                     </>
@@ -129,12 +154,13 @@ export default function Home({ data }: PageProps<Data>) {
                 initialBlocks={blocks}
                 selectedMiner={selectedMiner}
                 selectedBlock={selectedBlock}
+                autoRefreshInterval={clientConfig.frontend.autoRefreshInterval}
               />
             </>
           )}
         </div>
-        <ContactTwitter />
-        <Donation />
+        <ContactTwitter twitterHandle={clientConfig.frontend.twitterHandle} />
+        <Donation donation={clientConfig.donation} />
       </div>
     </div>
   );

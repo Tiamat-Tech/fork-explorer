@@ -1,3 +1,6 @@
+import "$std/dotenv/load.ts";
+import type { ClientConfig } from "../shared/client-config.ts";
+
 interface Config {
   // Whether to load real data or fake
   mode: "real" | "fake" | "fake-frontend";
@@ -94,6 +97,14 @@ interface Config {
   };
 }
 
+function parseAutoRefreshInterval(value: string | undefined): number | null {
+  if (value?.toLowerCase() === "null") {
+    return null;
+  }
+
+  return Number.parseInt(value ?? "120", 10);
+}
+
 const config: Config = {
   mode: (Deno.env.get("MODE") as Config["mode"]) ?? "fake",
 
@@ -113,16 +124,22 @@ const config: Config = {
     info: [],
     versionBit: parseInt(Deno.env.get("FORK_VERSION_BIT") ?? "2", 10),
     threshold: parseInt(Deno.env.get("FORK_THRESHOLD") ?? "1815", 10),
-    status: (Deno.env.get("FORK_STATUS") as Config["fork"]["status"]) ?? "started",
-    activationHeight: parseInt(Deno.env.get("FORK_ACTIVATION_HEIGHT") ?? "709632", 10),
-    showActivationCountdown: Deno.env.get("FORK_SHOW_ACTIVATION_COUNTDOWN") === "true",
-    showCelebrationConfetti: Deno.env.get("FORK_SHOW_CELEBRATION_CONFETTI") === "true",
+    status: (Deno.env.get("FORK_STATUS") as Config["fork"]["status"]) ??
+      "started",
+    activationHeight: parseInt(
+      Deno.env.get("FORK_ACTIVATION_HEIGHT") ?? "709632",
+      10,
+    ),
+    showActivationCountdown:
+      Deno.env.get("FORK_SHOW_ACTIVATION_COUNTDOWN") === "true",
+    showCelebrationConfetti:
+      Deno.env.get("FORK_SHOW_CELEBRATION_CONFETTI") === "true",
   },
 
   frontend: {
-    autoRefreshInterval: Deno.env.get("FRONTEND_AUTO_REFRESH_INTERVAL")
-      ? parseInt(Deno.env.get("FRONTEND_AUTO_REFRESH_INTERVAL")!, 10)
-      : 120,
+    autoRefreshInterval: parseAutoRefreshInterval(
+      Deno.env.get("FRONTEND_AUTO_REFRESH_INTERVAL"),
+    ),
     twitterHandle: Deno.env.get("FRONTEND_TWITTER_HANDLE") ?? "",
     about: {
       softfork: {
@@ -132,7 +149,8 @@ const config: Config = {
         ],
       },
       method: {
-        title: "Title of the softfork deployment method used (BIP9, Speedy Trial etc)",
+        title:
+          "Title of the softfork deployment method used (BIP9, Speedy Trial etc)",
         info: [
           "Info about the deployment method goes here",
           "Info about the deployment method goes here",
@@ -144,17 +162,44 @@ const config: Config = {
 
   donation: Deno.env.get("DONATION_LND_SERVER")
     ? {
-        type: "lnd",
-        data: {
-          server: Deno.env.get("DONATION_LND_SERVER") ?? "https://127.0.0.1:8080",
-          cert: Deno.env.get("DONATION_LND_CERT") ?? "/path/to/tls.cert",
-          macaroon: Deno.env.get("DONATION_LND_MACAROON") ?? "/path/to/invoice.macaroon",
-          lightningNodeUri: Deno.env.get("DONATION_LND_NODE_URI"),
-        },
-        lnurlPayUrl: Deno.env.get("DONATION_LNURL_PAY_URL") ?? "https://domain.com/invoice",
-      }
+      type: "lnd",
+      data: {
+        server: Deno.env.get("DONATION_LND_SERVER") ?? "https://127.0.0.1:8080",
+        cert: Deno.env.get("DONATION_LND_CERT") ?? "/path/to/tls.cert",
+        macaroon: Deno.env.get("DONATION_LND_MACAROON") ??
+          "/path/to/invoice.macaroon",
+        lightningNodeUri: Deno.env.get("DONATION_LND_NODE_URI"),
+      },
+      lnurlPayUrl: Deno.env.get("DONATION_LNURL_PAY_URL") ??
+        "https://domain.com/invoice",
+    }
+    : undefined,
+};
+
+// Only this explicitly selected subset may be passed to browser islands. Keep
+// RPC credentials, macaroon paths, and TLS certificate paths server-side.
+const clientConfig: ClientConfig = {
+  fork: {
+    name: config.fork.name,
+    threshold: config.fork.threshold,
+    status: config.fork.status,
+    activationHeight: config.fork.activationHeight,
+    showActivationCountdown: config.fork.showActivationCountdown,
+    showCelebrationConfetti: config.fork.showCelebrationConfetti,
+  },
+  frontend: {
+    autoRefreshInterval: config.frontend.autoRefreshInterval,
+    twitterHandle: config.frontend.twitterHandle,
+    celebrate: config.frontend.celebrate,
+  },
+  donation: config.donation
+    ? {
+      lnurlPayUrl: config.donation.lnurlPayUrl,
+      lightningNodeUri: config.donation.data.lightningNodeUri,
+    }
     : undefined,
 };
 
 export default config;
+export { clientConfig };
 export type { Config };

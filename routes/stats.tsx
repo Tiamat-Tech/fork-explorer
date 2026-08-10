@@ -1,6 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import { Head } from "$fresh/runtime.ts";
-import config from "../lib/config.ts";
+import config, { clientConfig } from "../lib/config.ts";
 import { getBlocks } from "../lib/blocks/index.ts";
 import type { IBlock } from "../shared/interfaces.ts";
 import SiteTitle from "../components/SiteTitle.tsx";
@@ -46,16 +46,25 @@ export default function Stats({ data }: PageProps<Data>) {
         <title>{forkName} activation - Statistics</title>
       </Head>
       <div class="content-wide">
-        <SiteTitle />
-        <SiteMenu currentPath="/stats" />
+        <SiteTitle forkName={clientConfig.fork.name} />
+        <SiteMenu
+          currentPath="/stats"
+          forkName={clientConfig.fork.name}
+          status={clientConfig.fork.status}
+        />
         <div class="body">
           <h2 class="chart-title common-header">144 Block Moving Average</h2>
           <p class="text">
-            Signalling percentage over the last 144 blocks (Moving Average) in the current period.
+            Signalling percentage over the last 144 blocks (Moving Average) in
+            the current period.
           </p>
           <p class="text">
-            Reaching {thresholdPercentage}% is not indicative of a softfork lock-in. {config.fork.threshold} blocks
-            within a period have to signal for the {config.fork.name} softfork to lock in.
+            Reaching{" "}
+            {thresholdPercentage}% is not indicative of a softfork lock-in.{" "}
+            {config.fork.threshold}{" "}
+            blocks within a period have to signal for the {config.fork.name}
+            {" "}
+            softfork to lock in.
           </p>
 
           <div class="chart-holder">
@@ -64,12 +73,14 @@ export default function Stats({ data }: PageProps<Data>) {
               <br />
               Data points: {chartData.length} blocks analyzed.
               <br />
-              Latest ratio: {chartData.length > 0 ? (chartData[chartData.length - 1].ratio * 100).toFixed(2) : 0}%
+              Latest ratio: {chartData.length > 0
+                ? (chartData[chartData.length - 1].ratio * 100).toFixed(2)
+                : 0}%
             </p>
           </div>
         </div>
-        <ContactTwitter />
-        <Donation />
+        <ContactTwitter twitterHandle={clientConfig.frontend.twitterHandle} />
+        <Donation donation={clientConfig.donation} />
       </div>
     </div>
   );

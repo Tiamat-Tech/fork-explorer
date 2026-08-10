@@ -1,9 +1,11 @@
-import { clientConfig } from "../shared/client-config.ts";
+interface SiteTitleProps {
+  forkName: string;
+}
 
-export default function SiteTitle() {
+export default function SiteTitle({ forkName }: SiteTitleProps) {
   return (
     <h1 class="site-title">
-      {clientConfig.fork.name} activation
+      {forkName} activation
       <a class="txt-link" href="/index.txt">Text version</a>
     </h1>
   );

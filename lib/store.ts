@@ -1,5 +1,4 @@
 import { signal } from "@preact/signals";
-import { clientConfig } from "../shared/client-config.ts";
 import type { IBlock } from "../shared/interfaces.ts";
 
 // Theme enum
@@ -77,14 +76,16 @@ export async function changeMonitoringPeriod(period: number | "current") {
   activePeriod.value = period === "current" ? null : period;
 }
 
-export function startAutoRefresh() {
-  if (!clientConfig.frontend.autoRefreshInterval || monitoringMode.value === "historic_period") {
+export function startAutoRefresh(autoRefreshInterval: number | null) {
+  if (!autoRefreshInterval || monitoringMode.value === "historic_period") {
     return;
   }
 
   setInterval(async () => {
     console.log("Auto refresh interval");
-    if (!autoRefreshEnabled.value || monitoringMode.value === "historic_period") {
+    if (
+      !autoRefreshEnabled.value || monitoringMode.value === "historic_period"
+    ) {
       return;
     }
     try {
@@ -98,7 +99,7 @@ export function startAutoRefresh() {
     } catch (error) {
       console.log("Couldn't fetch /blocks", (error as Error).message);
     }
-  }, clientConfig.frontend.autoRefreshInterval * 1000);
+  }, autoRefreshInterval * 1000);
 }
 
 export function changeTheme(newTheme: Theme) {

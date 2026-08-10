@@ -1,6 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import { Head } from "$fresh/runtime.ts";
-import config from "../lib/config.ts";
+import config, { clientConfig } from "../lib/config.ts";
 import { getBlocks } from "../lib/blocks/index.ts";
 import type { IBlock } from "../shared/interfaces.ts";
 import SiteTitle from "../components/SiteTitle.tsx";
@@ -30,11 +30,18 @@ export default function Miners({ data }: PageProps<Data>) {
         <title>{forkName} activation - Miners</title>
       </Head>
       <div class="content">
-        <SiteTitle />
-        <SiteMenu currentPath="/miners" />
-        <MinersTable initialBlocks={blocks} />
-        <ContactTwitter />
-        <Donation />
+        <SiteTitle forkName={clientConfig.fork.name} />
+        <SiteMenu
+          currentPath="/miners"
+          forkName={clientConfig.fork.name}
+          status={clientConfig.fork.status}
+        />
+        <MinersTable
+          initialBlocks={blocks}
+          threshold={clientConfig.fork.threshold}
+        />
+        <ContactTwitter twitterHandle={clientConfig.frontend.twitterHandle} />
+        <Donation donation={clientConfig.donation} />
       </div>
     </div>
   );
