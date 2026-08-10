@@ -7,6 +7,8 @@ import Donation from "../islands/Donation.tsx";
 
 export default function About() {
   const forkName = config.fork.name;
+  const SoftforkInfo = config.frontend.about?.softfork;
+  const DeploymentInfo = config.frontend.about?.method?.content;
 
   return (
     <div class="container">
@@ -22,22 +24,22 @@ export default function About() {
         />
         <div class="body">
           <div class="info-container">
-            <div class="info-section">
-              <h2 class="about-header">
-                Information about the softfork {forkName}
-              </h2>
-              {config.frontend.about?.softfork?.info?.map((section, i) => (
-                <p class="text" key={i}>{section}</p>
-              ))}
-            </div>
-            <div class="info-section">
-              <h2 class="about-header">
-                {config.frontend.about?.method?.title}
-              </h2>
-              {config.frontend.about?.method?.info?.map((section, i) => (
-                <p class="text" key={i}>{section}</p>
-              ))}
-            </div>
+            {SoftforkInfo && (
+              <div class="info-section">
+                <h2 class="about-header">
+                  Information about the softfork {forkName}
+                </h2>
+                <SoftforkInfo />
+              </div>
+            )}
+            {DeploymentInfo && (
+              <div class="info-section">
+                <h2 class="about-header">
+                  {config.frontend.about?.method?.title}
+                </h2>
+                <DeploymentInfo />
+              </div>
+            )}
             <div class="info-section">
               <h2 class="about-header">About this site</h2>
               <p class="text">

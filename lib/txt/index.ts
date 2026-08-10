@@ -74,11 +74,13 @@ export function homeTXT() {
     } else {
       if (willProbablyActivate) {
         notes.push(
-          `Taproot will lock in with the current signalling ratio (${currentSignallingPercentage}%)!`,
+          `${forkName} will lock in with the current signalling ratio (${currentSignallingPercentage}%)!`,
         );
-      } else {notes.push(
-          `Taproot will not lock in with the current signalling ratio (${currentSignallingPercentage}%)`,
-        );}
+      } else {
+        notes.push(
+          `${forkName} will not lock in with the current signalling ratio (${currentSignallingPercentage}%)`,
+        );
+      }
     }
   }
 

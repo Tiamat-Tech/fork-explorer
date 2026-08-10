@@ -1,8 +1,6 @@
 import { Handlers } from "$fresh/server.ts";
 import config from "../../lib/config.ts";
 
-const responseMetadata = JSON.stringify([["text/plain", "Donation to taproot.watch"]]);
-
 export const handler: Handlers = {
   GET(_req, _ctx) {
     if (!config.donation) {
@@ -14,9 +12,14 @@ export const handler: Handlers = {
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
+
+    const responseMetadata = JSON.stringify([[
+      "text/plain",
+      config.donation.description,
+    ]]);
 
     return new Response(
       JSON.stringify({
@@ -29,7 +32,7 @@ export const handler: Handlers = {
       }),
       {
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   },
 };

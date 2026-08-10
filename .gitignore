@@ -2,6 +2,9 @@
 .vscode
 .env
 
+# Instance-specific content (copy from config.example.tsx)
+config/config.tsx
+
 # Build output
 _fresh/
 

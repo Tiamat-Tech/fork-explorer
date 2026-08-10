@@ -14,6 +14,12 @@ credentials. The `.env` file is ignored by Git and must stay server-side. On a
 multi-user system, restrict it to the service account (for example,
 `chmod 600 .env`).
 
+For deployment-specific rich content, copy `config/config.example.tsx` to
+`config/config.tsx` and edit the copy using Preact JSX. This is the default
+content-module path; set `SITE_CONFIG` only to use a different path. The
+instance file is ignored by Git and is for public page content only. Keep all
+credentials in `.env`.
+
 ## How to run
 
 For development:

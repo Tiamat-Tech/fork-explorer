@@ -11,11 +11,6 @@ interface LnurlPayComment {
 const lnurlPayComments: LnurlPayComment[] = JSON.parse(
   (await Deno.readTextFile("./lnurlpay.json")) || "[]",
 );
-const responseMetadata = JSON.stringify([[
-  "text/plain",
-  "Donation to taproot.watch",
-]]);
-
 // Simple SHA256 hash for description_hash
 async function sha256(message: string): Promise<string> {
   const msgBuffer = new TextEncoder().encode(message);
@@ -38,6 +33,11 @@ export const handler: Handlers = {
       );
     }
 
+    const responseMetadata = JSON.stringify([[
+      "text/plain",
+      config.donation.description,
+    ]]);
+
     const url = new URL(req.url);
     const amountString = url.searchParams.get("amount");
     if (amountString === null) {
@@ -57,7 +57,7 @@ export const handler: Handlers = {
 
     const addInvoicePayload = JSON.stringify({
       value_msat: amount,
-      memo: "Donation to taproot.watch",
+      memo: config.donation.description,
       description_hash: descriptionHash,
     });
 

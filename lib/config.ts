@@ -1,5 +1,42 @@
 import "$std/dotenv/load.ts";
+import { resolve, toFileUrl } from "$std/path/mod.ts";
+import type { ComponentType } from "preact";
 import type { ClientConfig } from "../shared/client-config.ts";
+
+interface CelebrateConfig {
+  type: string;
+  url: string;
+}
+
+interface AboutConfig {
+  softfork?: ComponentType;
+  method?: {
+    title: string;
+    content: ComponentType;
+  };
+}
+
+interface SponsorConfig {
+  title: string;
+  url: string;
+  imageUri: string;
+}
+
+// Public, instance-specific content. Implement this interface in a .tsx file
+// when a deployment needs rich JSX content. Secrets still belong in .env.
+export interface SiteConfig {
+  fork?: {
+    info?: string[];
+  };
+  frontend?: {
+    celebrate?: CelebrateConfig;
+    about?: AboutConfig;
+    sponsors?: SponsorConfig[];
+  };
+  donation?: {
+    description: string;
+  };
+}
 
 interface Config {
   // Whether to load real data or fake
@@ -52,35 +89,19 @@ interface Config {
     // Twitter handle, this is for the Twitter link preview
     twitterHandle: string;
     // Celebratory video to display once lock-in is reached
-    celebrate?: {
-      type: string;
-      url: string;
-    };
+    celebrate?: CelebrateConfig;
     // Content related to the About page
-    about?: {
-      // Information about the softfork
-      softfork?: {
-        info?: string[];
-      };
-      // Information related to the current deployment method being
-      // used for this softfork (i.e BIP9, Speedy Trial etc)
-      method?: {
-        title: string;
-        info: string[];
-      };
-    };
+    about?: AboutConfig;
     // Sponsors of this project
-    sponsors?: {
-      title: string;
-      url: string;
-      imageUri: string;
-    }[];
+    sponsors?: SponsorConfig[];
   };
 
   // Donation configuration, right now only supports lnd
   donation?: {
     // Backend type, currently only supports lnd
     type: "lnd";
+    // Public description used in LNURL metadata and invoice memos.
+    description: string;
     // Data for the backend
     data: {
       // REST server
@@ -105,6 +126,29 @@ function parseAutoRefreshInterval(value: string | undefined): number | null {
   return Number.parseInt(value ?? "120", 10);
 }
 
+async function loadSiteConfig(): Promise<SiteConfig> {
+  const configPath = Deno.env.get("SITE_CONFIG") || "config/config.tsx";
+
+  let module;
+  try {
+    module = await import(toFileUrl(resolve(configPath)).href);
+  } catch (error) {
+    throw new Error(
+      `Unable to load site config at ${configPath}. Copy config/config.example.tsx to config/config.tsx or set SITE_CONFIG to another path.`,
+      { cause: error },
+    );
+  }
+
+  if (!module.default || typeof module.default !== "object") {
+    throw new Error(`${configPath} must have a default SiteConfig export`);
+  }
+
+  return module.default as SiteConfig;
+}
+
+const siteConfig = await loadSiteConfig();
+const forkName = Deno.env.get("FORK_NAME") ?? "CTV";
+
 const config: Config = {
   mode: (Deno.env.get("MODE") as Config["mode"]) ?? "fake",
 
@@ -120,8 +164,8 @@ const config: Config = {
   },
 
   fork: {
-    name: Deno.env.get("FORK_NAME") ?? "CTV",
-    info: [],
+    name: forkName,
+    info: siteConfig.fork?.info ?? [],
     versionBit: parseInt(Deno.env.get("FORK_VERSION_BIT") ?? "2", 10),
     threshold: parseInt(Deno.env.get("FORK_THRESHOLD") ?? "1815", 10),
     status: (Deno.env.get("FORK_STATUS") as Config["fork"]["status"]) ??
@@ -141,28 +185,16 @@ const config: Config = {
       Deno.env.get("FRONTEND_AUTO_REFRESH_INTERVAL"),
     ),
     twitterHandle: Deno.env.get("FRONTEND_TWITTER_HANDLE") ?? "",
-    about: {
-      softfork: {
-        info: [
-          "Info about the CTV softfork goes here",
-          "Info about the CTV softfork goes here",
-        ],
-      },
-      method: {
-        title:
-          "Title of the softfork deployment method used (BIP9, Speedy Trial etc)",
-        info: [
-          "Info about the deployment method goes here",
-          "Info about the deployment method goes here",
-        ],
-      },
-    },
-    sponsors: [],
+    celebrate: siteConfig.frontend?.celebrate,
+    about: siteConfig.frontend?.about,
+    sponsors: siteConfig.frontend?.sponsors ?? [],
   },
 
   donation: Deno.env.get("DONATION_LND_SERVER")
     ? {
       type: "lnd",
+      description: siteConfig.donation?.description ??
+        `Donation to ${forkName} activation explorer`,
       data: {
         server: Deno.env.get("DONATION_LND_SERVER") ?? "https://127.0.0.1:8080",
         cert: Deno.env.get("DONATION_LND_CERT") ?? "/path/to/tls.cert",
